@@ -1,0 +1,15 @@
+http_targets:
+  - https://www.playstation.com/
+  - https://www.wikipedia.org/
+  - https://www.bing.com/
+  - https://www.google.com/
+  - https://www.github.com/
+  - https://www.aparat.com/
+  - https://www.digikala.com/
+  - https://divar.ir/
+
+remote_write:
+  url: "http://{{ lookup('env', 'PROMETHEUS_HOST') | default('127.0.0.1:9090', true) }}/api/v1/write"
+  basic_auth:
+    username: "{{ lookup('env', 'PROMETHEUS_USER') | default('admin', true) }}"
+    password: "{{ lookup('env', 'PROMETHEUS_PASS') | default('changeme', true) }}"
