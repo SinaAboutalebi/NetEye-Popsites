@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 1m
+
+scrape_configs:
+  - job_name: "blackbox_http"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+{% for t in http_targets %}
+          - {{ t }}
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+      - target_label: popsite
+        replacement: "{{ inventory_hostname }}"
+
+remote_write:
+  - url: "{{ remote_write.url }}"
+{% if remote_write.basic_auth is defined %}
+    basic_auth:
+      username: "{{ remote_write.basic_auth.username }}"
+      password: "{{ remote_write.basic_auth.password }}"
+{% endif %}
+{% if remote_write.bearer_token is defined %}
+    bearer_token: "{{ remote_write.bearer_token }}"
+{% endif %}
+    queue_config:
+      capacity: 10000
+      max_shards: 4
+      max_samples_per_send: 1000
+      batch_send_deadline: 5s
+    metadata_config:
+      send: true
+      send_interval: 1m
