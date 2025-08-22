@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    mem_limit: "128m"
+    cpus: "0.25"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9115/"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+
+  prom-agent:
+    image: prom/prometheus:latest
+    container_name: prom_agent
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --log.level=info
+    volumes:
+      - ./agent/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom_data:/prometheus
+    mem_limit: "256m"
+    cpus: "0.50"
+    depends_on:
+      - blackbox-exporter
+
+volumes:
+  prom_data:
